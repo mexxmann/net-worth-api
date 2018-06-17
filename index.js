@@ -2,6 +2,36 @@ http = require('http');
 
 const express = require('express');
 const app = express();
+const util = require('./api/util');
+
+app.use(express.json());
+
+// Content-Type validation
+app.use('/api/', function(req, res, next) {
+  // If this is a CORS pre-flight check, skip validation
+  if (req.headers.hasOwnProperty('access-control-request-method')) {
+    return next();
+  }
+
+  // Our API only accepts JSON payloads for POST methods
+  if (!req.headers.hasOwnProperty('content-type') || req.method != "POST") {
+    return next();
+  }
+  var contype = req.headers['content-type'];
+  if (!contype || contype.indexOf('application/json') !== 0) {
+    util.logWithDate(`content-type: ${contype} not accepted for path: ${req.url}`);
+    return res.sendStatus(400);
+  }
+  return next();
+});
+
+// Disable CORS - don't do this for a real app!
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 // Main API routes.
 app.use('/api', require('./api/net-worth'));
