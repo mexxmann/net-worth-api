@@ -32,7 +32,6 @@ router.post('/networth/:userId/', (req, res) => { // eslint-disable-line consist
     return res.status(400).send({ errors: 'Missing POST body' });
   }
 
-  // TODO: validate input!
   netWorthModel.computeOutputModel(body, currencyTo, currencyConversionRateProvider).then((outputModel) => {
     return res.status(200).send(outputModel);
   }).catch((err) => {

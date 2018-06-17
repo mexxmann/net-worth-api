@@ -36,6 +36,32 @@ describe('NetWorth Model - computeOutputModel', () => {
       expect(outputModel.calculated.totalAssets).to.equal(3);
       expect(outputModel.calculated.totalLiabilities).to.equal(2);
       expect(outputModel.calculated.netWorth).to.equal(1);
+      expect(outputModel.currency).to.equal('USD');
+      done();
+    }).catch((e) => { done(e); });
+  });
+
+  it('Handles null input model', (done) => {
+    currencyConversionRateProvider = () => Promise.reject();
+    netWorthModel.computeOutputModel(null).then((outputModel) => {
+      expect(outputModel.calculated.totalAssets).to.equal(0);
+      expect(outputModel.calculated.totalLiabilities).to.equal(0);
+      expect(outputModel.calculated.netWorth).to.equal(0);
+      expect(outputModel.currency).to.equal('USD');
+      done();
+    }).catch((e) => { done(e); });
+  });
+
+  it('Handles malformed input model', (done) => {
+    const inputModel = {
+    };
+    netWorthModel.computeOutputModel(inputModel).then((outputModel) => {
+      expect(outputModel.assets).to.exist;
+      expect(outputModel.liabilities).to.exist;
+      expect(outputModel.currency).to.equal('USD');
+      expect(outputModel.calculated.totalAssets).to.equal(0);
+      expect(outputModel.calculated.totalLiabilities).to.equal(0);
+      expect(outputModel.calculated.netWorth).to.equal(0);
       done();
     }).catch((e) => { done(e); });
   });
@@ -62,6 +88,7 @@ describe('NetWorth Model - computeOutputModel', () => {
     }).catch((e) => { done(e); });
   });
 
+  // TODO: Maybe https://github.com/MikeMcl/decimal.js/ will help...
   // it('Handles decimals up to a certain precision', (done) => {
   //   const inputModel = {
   //     assets: {

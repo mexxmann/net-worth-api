@@ -118,6 +118,22 @@ function computeOutputModelWithConversionRate(inputModel, currencyTo, currencyCo
 }
 
 /**
+ * Returns an inputModel where all important members are available.
+ * Does not mutate the input.
+ * @param {*} inputModel The input
+ * @returns {Object} The santized input model
+ */
+function sanitizeInputModel(inputModel) {
+  const localInputModel = {};
+
+  localInputModel.assets = inputModel && inputModel.assets ? inputModel.assets : {};
+  localInputModel.liabilities = inputModel && inputModel.liabilities ? inputModel.liabilities : {};
+  localInputModel.currency = inputModel && inputModel.currency ? inputModel.currency : 'USD';
+
+  return localInputModel;
+}
+
+/**
  * Generates an output model with:
  * - The inputs, with currency conversion applied if necessary
  * - Calculated outputs
@@ -128,19 +144,23 @@ function computeOutputModelWithConversionRate(inputModel, currencyTo, currencyCo
  * @returns {Promise} A promise for the output model
  */
 function computeOutputModel(inputModel, currencyTo, currencyConversionRateProvider) {
+  const localInputModel = sanitizeInputModel(inputModel);
+
+  let targetCurrency = localInputModel.currency;
   let providerPromise = Promise.resolve(1); // Default to a rate of 1 (no conversion)
-  if (currencyTo && currencyTo !== inputModel.currency) {
-    providerPromise = currencyConversionRateProvider(inputModel.currency, currencyTo);
+  if (currencyTo && currencyTo !== localInputModel.currency && currencyConversionRateProvider) {
+    targetCurrency = currencyTo;
+    providerPromise = currencyConversionRateProvider(localInputModel.currency, currencyTo);
   }
 
   return providerPromise.then((currencyConversionRate) => {
-    return computeOutputModelWithConversionRate(inputModel, currencyTo, currencyConversionRate);
+    return computeOutputModelWithConversionRate(localInputModel, targetCurrency, currencyConversionRate);
   }).catch((err) => {
     util.logWithDate(`Failed to retrieve currency conversion rate from provider: ${err}`);
 
     // Can't do currency conversion but execute other computation steps
     // Retain the original currency since we couldn't do the conversion.
-    return computeOutputModelWithConversionRate(inputModel, inputModel.currency, 1);
+    return computeOutputModelWithConversionRate(localInputModel, localInputModel.currency, 1);
   });
 }
 
