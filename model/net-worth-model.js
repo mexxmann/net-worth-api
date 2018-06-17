@@ -1,10 +1,4 @@
-function computeLineItemTotal(balanceSheetData) {
-    let total = 0;
-    Object.keys(balanceSheetData).forEach(key => {
-        total += balanceSheetData[key].value;
-    });
-    return total;
-}
+const util = require('../api/util');
 
 function getInitialModel() {
     return {
@@ -60,16 +54,57 @@ function getInitialModel() {
       };
 }
 
-function computeOutputModel(inputModel) {
-    // Make a copy of the model so we don't mutate the input
-    // TODO: improve performance
-    let outputModel = JSON.parse(JSON.stringify(inputModel));
+function computeLineItemTotal(balanceSheetData) {
+    let total = 0;
+    Object.keys(balanceSheetData).forEach(key => {
+        total += balanceSheetData[key].value;
+    });
+    return total;
+}
 
-    outputModel.totalAssets = computeLineItemTotal(inputModel.assets);
-    outputModel.totalLiabilities = computeLineItemTotal(inputModel.liabilities);
+// TODO: Ensure all numbers are doubles
+function generateOutputBalanceSheetItems(inputBalanceSheetData, rate) {
+    const outputBalanceSheetData = {};
+    Object.keys(inputBalanceSheetData).forEach(key => {
+        outputBalanceSheetData[key] = Object.assign({}, inputBalanceSheetData[key]);
+
+        // Apply currency conversion if necessary
+        if (rate !== 1) {
+            outputBalanceSheetData[key].value = outputBalanceSheetData[key].value * rate;
+        }
+    });
+    return outputBalanceSheetData;
+}
+
+function _computeOutputModel(inputModel, currencyTo, currencyConversionRate) {
+    let outputModel = {};
+
+    outputModel.assets = generateOutputBalanceSheetItems(inputModel.assets, currencyConversionRate);
+    outputModel.liabilities = generateOutputBalanceSheetItems(inputModel.liabilities, currencyConversionRate);
+    outputModel.currency = currencyTo;
+
+    outputModel.totalAssets = computeLineItemTotal(outputModel.assets);
+    outputModel.totalLiabilities = computeLineItemTotal(outputModel.liabilities);
     outputModel.netWorth = outputModel.totalAssets - outputModel.totalLiabilities;
   
     return outputModel;
+}
+
+function computeOutputModel(inputModel, currencyTo, currencyConversionRateProvider) {
+    let providerPromise = Promise.resolve(1); // Default to a rate of 1 (no conversion)
+    if (currencyTo && currencyTo !== inputModel.currency) {
+        providerPromise = currencyConversionRateProvider(inputModel.currency, currencyTo);
+    }
+
+    return providerPromise.then(currencyConversionRate => {
+        return _computeOutputModel(inputModel, currencyTo, currencyConversionRate);
+    }).catch(err => {
+        util.logWithDate(`Failed to retrieve currency conversion rate from provider: ${err}`);
+
+        // Can't do currency conversion but execute other computation steps
+        // Retain the original currency since we couldn't do the conversion.
+        return _computeOutputModel(inputModel, inputModel.currency, 1);
+    });
 }
 
 module.exports = {

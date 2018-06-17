@@ -7,6 +7,12 @@
 * Run `npm install` or `yarn install` to install its dependencies
 * Run `npm start` or `yarn start` to start the service.
 
+# Mock Currency API
+* Has a dependency on a mocked third-party API:
+  * API configuration: https://getsandbox.com/sandboxes/currencyrate#coding
+  * API URL: http://currencyrate.getsandbox.com/currencyRate/{currencyFrom}/{currencyTo}
+  * example: http://currencyrate.getsandbox.com/currencyRate/USD/CAD
+
 # Dev Options
 
 Run in debug mode
