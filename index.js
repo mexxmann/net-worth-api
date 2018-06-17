@@ -1,7 +1,8 @@
 http = require('http');
 
 const express = require('express');
-const util = require('./api/util');
+const util = require('./src/api/util');
+const api = require('./src/api/net-worth');
 
 const app = express();
 app.use(express.json());
@@ -34,7 +35,7 @@ app.use((req, res, next) => {
 });
 
 // Main API routes.
-app.use('/api', require('./api/net-worth'));
+app.use('/api', api);
 
 http.createServer(app).listen(3001, () => {
   console.log('Express server listening on port 3001');

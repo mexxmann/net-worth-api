@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "debug": "node debug index.js",
-    "test": "./node_modules/mocha/bin/_mocha tests/bootstrap.test.js tests/**/*.test.js",
+    "test": "./node_modules/mocha/bin/_mocha tests/**/*.test.js",
     "lint": "./node_modules/.bin/eslint ./"
   },
   "author": "Daniel Lishingman",

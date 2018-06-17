@@ -3,4 +3,4 @@
 # Ignore coverage pages
 /coverage/*
 #Ignore snapshot of javascript taken from https://getsandbox.com/sandboxes/currencyrate
-/mockCurrencyApi/*
+/src/mockCurrencyApi/*

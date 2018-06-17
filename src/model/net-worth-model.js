@@ -67,7 +67,9 @@ function getInitialModel() {
 function computeLineItemTotal(balanceSheetData) {
   let total = 0;
   Object.keys(balanceSheetData).forEach((key) => {
-    total += balanceSheetData[key].value;
+    if (util.isNumeric(balanceSheetData[key].value)) {
+      total += balanceSheetData[key].value;
+    }
   });
   return total;
 }
@@ -107,9 +109,10 @@ function computeOutputModelWithConversionRate(inputModel, currencyTo, currencyCo
   outputModel.liabilities = generateOutputBalanceSheetItems(inputModel.liabilities, currencyConversionRate);
   outputModel.currency = currencyTo;
 
-  outputModel.totalAssets = computeLineItemTotal(outputModel.assets);
-  outputModel.totalLiabilities = computeLineItemTotal(outputModel.liabilities);
-  outputModel.netWorth = outputModel.totalAssets - outputModel.totalLiabilities;
+  outputModel.calculated = {};
+  outputModel.calculated.totalAssets = computeLineItemTotal(outputModel.assets);
+  outputModel.calculated.totalLiabilities = computeLineItemTotal(outputModel.liabilities);
+  outputModel.calculated.netWorth = outputModel.calculated.totalAssets - outputModel.calculated.totalLiabilities;
 
   return outputModel;
 }
