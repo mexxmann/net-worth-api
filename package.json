@@ -1,0 +1,30 @@
+{
+  "name": "promises-example",
+  "version": "1.0.0",
+  "description": "Javascript promises example",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "debug": "node debug index.js",
+    "test": "./node_modules/mocha/bin/_mocha tests/bootstrap.test.js tests/**/*.test.js",
+    "lint": "./node_modules/.bin/eslint ./"
+  },
+  "author": "Daniel Lishingman",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=7.6.0"
+  },
+  "dependencies": {
+    "express": "^4.16.3"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.12.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.9.1",
+    "mocha": "^5.2.0"
+  }
+}

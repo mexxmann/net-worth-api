@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Configuration files.
+config/personal.js
+config/environment.js
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules
+
+# Optional npm cache directory
+.npm
+
+# Generated documentation
+docs
+
+#istabul coverage files
+coverage
+
+# IDE stuff
+.idea
+
+# Mac stuff
+.DS_store
+
+# Dev env and pm2 logs
+access.log
+error.log
+output.log
+#guard/livereload watch file.
+server_start.log

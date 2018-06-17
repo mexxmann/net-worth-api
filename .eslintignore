@@ -1,0 +1,4 @@
+# Ignore documentation pages.
+/docs/*
+# Ignore coverage pages
+/coverage/*

@@ -1,0 +1,21 @@
+{
+  "extends": "airbnb",
+  "rules": {
+    "no-console": "off",
+    "arrow-body-style": "off",
+    "max-len": ["error", 120],
+    "indent": ["error", 2],
+    "no-undef": 0,
+    "require-jsdoc": ["error", {
+      "require": {
+        "FunctionDeclaration": true,
+        "MethodDefinition": true,
+        "ClassDeclaration": true
+      }
+    }],
+    "valid-jsdoc": ["error", {
+      "requireParamDescription": true,
+      "requireReturn": false
+    }]
+  }
+}
