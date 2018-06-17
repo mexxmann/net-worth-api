@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/networth/:userId/', (req, res) => {
   const model = netWorthModel.getInitialModel();
   netWorthModel.computeOutputModel(model).then((outputModel) => {
-    return res.status(200).send(outputModel);
+    return res.status(200).send({ data: outputModel });
   }).catch((err) => {
     return res.status(500).send({
       errors: `Failed to compute new output model: ${err.toString()}`,
@@ -33,7 +33,7 @@ router.post('/networth/:userId/', (req, res) => { // eslint-disable-line consist
   }
 
   netWorthModel.computeOutputModel(body, currencyTo, currencyConversionRateProvider).then((outputModel) => {
-    return res.status(200).send(outputModel);
+    return res.status(200).send({ data: outputModel });
   }).catch((err) => {
     return res.status(500).send({
       errors: `Failed to compute new output model: ${err.toString()}`,
