@@ -59,6 +59,63 @@ function getInitialModel() {
   };
 }
 
+// Helper function used from computeFutureNetWorth
+// Note: allYearsAssetBalanceSheet parameter is mutated - would be nice to find a way not to do that!
+computeYearlyBalanceForAllAssets = (assetBalanceSheet, year, allYearsAssetBalanceSheet) => {
+  let currentYearBalanceForAllAssets = 0;
+  const currentYearAssetBalanceSheet = {};
+  if (assetBalanceSheet && Object.keys(assetBalanceSheet).length > 0) {
+    Object.keys(assetBalanceSheet).forEach((key) => {
+      let currentYearBalanceForAsset = 0;
+      if (year === 0) {
+        if (util.isNumeric(assetBalanceSheet[key].value)) {
+          currentYearBalanceForAsset = assetBalanceSheet[key].value;
+        }
+      } else {
+        currentYearBalanceForAsset = allYearsAssetBalanceSheet[year - 1][key];
+      }
+      currentYearBalanceForAsset += currentYearBalanceForAsset * (assetBalanceSheet[key].interestRate / 100);
+
+      currentYearAssetBalanceSheet[key] = currentYearBalanceForAsset;
+      currentYearBalanceForAllAssets += currentYearBalanceForAsset;
+    });
+  }
+  allYearsAssetBalanceSheet.push(currentYearAssetBalanceSheet);
+  return currentYearBalanceForAllAssets;
+};
+
+// Helper function used from computeFutureNetWorth
+// Note: allYearsLiabilitiesBalanceSheet parameter is mutated - would be nice to find a way not to do that!
+computeYearlyBalanceForAllLiabilities = (liabilitiesBalanceSheet, year, allYearsLiabilitiesBalanceSheet) => {
+  let currentYearBalanceForAllLiabilities = 0;
+  const currentYearLiabilitiesBalanceSheet = {};
+  if (liabilitiesBalanceSheet && Object.keys(liabilitiesBalanceSheet).length > 0) {
+    Object.keys(liabilitiesBalanceSheet).forEach((key) => {
+      let currentYearBalanceForLiability = 0;
+      if (year === 0) {
+        if (util.isNumeric(liabilitiesBalanceSheet[key].value)) {
+          currentYearBalanceForLiability = liabilitiesBalanceSheet[key].value;
+        }
+      } else {
+        currentYearBalanceForLiability = allYearsLiabilitiesBalanceSheet[year - 1][key];
+      }
+
+      // Original Principal + interest - payments over year
+      currentYearBalanceForLiability =
+        (currentYearBalanceForLiability +
+        (currentYearBalanceForLiability * (liabilitiesBalanceSheet[key].interestRate / 100))) -
+        (liabilitiesBalanceSheet[key].monthlyPayment * 12);
+
+      currentYearLiabilitiesBalanceSheet[key] = currentYearBalanceForLiability;
+      if (currentYearBalanceForLiability > 0) {
+        currentYearBalanceForAllLiabilities += currentYearBalanceForLiability;
+      }
+    });
+  }
+  allYearsLiabilitiesBalanceSheet.push(currentYearLiabilitiesBalanceSheet);
+  return currentYearBalanceForAllLiabilities;
+};
+
 /**
  * Calculates future Net Worth
  * @param {*} assetBalanceSheet Assets
@@ -71,53 +128,17 @@ function computeFutureNetWorth(assetBalanceSheet, liabilitiesBalanceSheet) {
   const allYearsLiabilitiesBalanceSheet = [];
 
   for (let year = 0; year < 20; year += 1) {
-    let currentYearBalanceForAllAssets = 0;
-    const currentYearAssetBalanceSheet = {};
-    if (assetBalanceSheet && Object.keys(assetBalanceSheet).length > 0) {
-      Object.keys(assetBalanceSheet).forEach((key) => {
-        let currentYearBalanceForAsset = 0;
-        if (year === 0) {
-          if (util.isNumeric(assetBalanceSheet[key].value)) {
-            currentYearBalanceForAsset = assetBalanceSheet[key].value;
-          }
-        } else {
-          currentYearBalanceForAsset = allYearsAssetBalanceSheet[year - 1][key];
-        }
-        currentYearBalanceForAsset += currentYearBalanceForAsset * (assetBalanceSheet[key].interestRate / 100);
+    const currentYearBalanceForAllAssets = computeYearlyBalanceForAllAssets(
+      assetBalanceSheet,
+      year,
+      allYearsAssetBalanceSheet,
+    );
 
-        currentYearAssetBalanceSheet[key] = currentYearBalanceForAsset;
-        currentYearBalanceForAllAssets += currentYearBalanceForAsset;
-      });
-    }
-    allYearsAssetBalanceSheet.push(currentYearAssetBalanceSheet);
-
-
-    let currentYearBalanceForAllLiabilities = 0;
-    const currentYearLiabilitiesBalanceSheet = {};
-    if (liabilitiesBalanceSheet && Object.keys(liabilitiesBalanceSheet).length > 0) {
-      Object.keys(liabilitiesBalanceSheet).forEach((key) => {
-        let currentYearBalanceForLiability = 0;
-        if (year === 0) {
-          if (util.isNumeric(liabilitiesBalanceSheet[key].value)) {
-            currentYearBalanceForLiability = liabilitiesBalanceSheet[key].value;
-          }
-        } else {
-          currentYearBalanceForLiability = allYearsLiabilitiesBalanceSheet[year - 1][key];
-        }
-
-        // Original Principal + interest - payments over year
-        currentYearBalanceForLiability =
-          (currentYearBalanceForLiability +
-          (currentYearBalanceForLiability * (liabilitiesBalanceSheet[key].interestRate / 100))) -
-          (liabilitiesBalanceSheet[key].monthlyPayment * 12);
-
-        currentYearLiabilitiesBalanceSheet[key] = currentYearBalanceForLiability;
-        if (currentYearBalanceForLiability > 0) {
-          currentYearBalanceForAllLiabilities += currentYearBalanceForLiability;
-        }
-      });
-    }
-    allYearsLiabilitiesBalanceSheet.push(currentYearLiabilitiesBalanceSheet);
+    const currentYearBalanceForAllLiabilities = computeYearlyBalanceForAllLiabilities(
+      liabilitiesBalanceSheet,
+      year,
+      allYearsLiabilitiesBalanceSheet,
+    );
 
     futureNetWorth.push(currentYearBalanceForAllAssets - currentYearBalanceForAllLiabilities);
   }
