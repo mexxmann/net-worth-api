@@ -164,3 +164,95 @@ describe('NetWorth Model - computeOutputModel', () => {
     }).catch((e) => { done(e); });
   });
 });
+
+describe('NetWorth Model - computeFutureNetWorth', () => {
+  it('should compute Net Worth', () => {
+    const inputModel = {
+      assets: {
+        LineItem01: {
+          interestRate: 50,
+          value: 2000,
+        },
+        LineItem02: {
+          interestRate: 25,
+          value: 1000,
+        },
+      },
+      liabilities: {
+        LineItem01: {
+          interestRate: 5,
+          monthlyPayment: 50,
+          value: 1000,
+        },
+        LineItem02: {
+          interestRate: 10,
+          monthlyPayment: 20,
+          value: 500,
+        },
+      },
+      currency: 'USD',
+    };
+
+    const futureNetWorth = netWorthModel.computeFutureNetWorth(inputModel.assets, inputModel.liabilities);
+
+    const year01LineItem01Assets =
+      inputModel.assets.LineItem01.value +
+      (inputModel.assets.LineItem01.value * (inputModel.assets.LineItem01.interestRate / 100));
+    const year01LineItem02Assets =
+      inputModel.assets.LineItem02.value +
+      (inputModel.assets.LineItem02.value * (inputModel.assets.LineItem02.interestRate / 100));
+    const year01LineItem01Liabilities =
+      (inputModel.liabilities.LineItem01.value +
+      (inputModel.liabilities.LineItem01.value * (inputModel.liabilities.LineItem01.interestRate / 100))) -
+      (inputModel.liabilities.LineItem01.monthlyPayment * 12);
+    const year01LineItem02Liabilities =
+      (inputModel.liabilities.LineItem02.value +
+      (inputModel.liabilities.LineItem02.value * (inputModel.liabilities.LineItem02.interestRate / 100))) -
+      (inputModel.liabilities.LineItem02.monthlyPayment * 12);
+    const year01NetWorth =
+      (year01LineItem01Assets + year01LineItem02Assets) -
+      (year01LineItem01Liabilities > 0 ? year01LineItem01Liabilities : 0) -
+      (year01LineItem02Liabilities > 0 ? year01LineItem02Liabilities : 0);
+    expect(futureNetWorth[0]).to.equal(year01NetWorth);
+    console.log('year01NetWorth: ', year01NetWorth);
+
+    const year02LineItem01Assets =
+      year01LineItem01Assets +
+      (year01LineItem01Assets * (inputModel.assets.LineItem01.interestRate / 100));
+    const year02LineItem02Assets =
+      year01LineItem02Assets +
+      (year01LineItem02Assets * (inputModel.assets.LineItem02.interestRate / 100));
+    const year02LineItem01Liabilities =
+      (year01LineItem01Liabilities +
+      (year01LineItem01Liabilities * (inputModel.liabilities.LineItem01.interestRate / 100))) -
+      (inputModel.liabilities.LineItem01.monthlyPayment * 12);
+    const year02LineItem02Liabilities =
+      (year01LineItem02Liabilities +
+      (year01LineItem02Liabilities * (inputModel.liabilities.LineItem02.interestRate / 100))) -
+      (inputModel.liabilities.LineItem02.monthlyPayment * 12);
+    const year02NetWorth =
+      (year02LineItem01Assets + year02LineItem02Assets) -
+      (year02LineItem01Liabilities > 0 ? year02LineItem01Liabilities : 0) -
+      (year02LineItem02Liabilities > 0 ? year02LineItem02Liabilities : 0);
+    expect(futureNetWorth[1]).to.equal(year02NetWorth);
+    console.log('year02NetWorth: ', year02NetWorth);
+  });
+
+  it('handles null inputs', () => {
+    const futureNetWorth = netWorthModel.computeFutureNetWorth(null, null);
+    expect(futureNetWorth[0]).to.equal(0);
+  });
+
+  it('handles empty inputs', () => {
+    const inputModel = {
+      assets: {
+      },
+      liabilities: {
+      },
+      currency: 'USD',
+    };
+
+    const futureNetWorth = netWorthModel.computeFutureNetWorth(inputModel.assets, inputModel.liabilities);
+    expect(futureNetWorth[0]).to.equal(0);
+  });
+});
