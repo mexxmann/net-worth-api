@@ -7,28 +7,28 @@ function getRateTable() {
   // Rates taken from https://www.x-rates.com/historical/?from=EUR&amount=1&date=2018-06-16
   var rateTable = {
       USD_CAD: 1.320236,
-      CAD_USD: 0.757440,
+      CAD_USD: 0.7574403364247,
       USD_EUR: 0.861585,
-      EUR_USD: 1.160652,
+      EUR_USD: 1.16065158980252,
       USD_GBP: 0.753444,
-      GBP_USD: 1.327239,
+      GBP_USD: 1.32723865343675,
       USD_INR: 68.193694,
-      INR_USD: 0.014664,
+      INR_USD: 0.0146641124911051,
 
       CAD_EUR: 0.652599,
-      EUR_CAD: 1.532334,
+      EUR_CAD: 1.53233455766864,
       CAD_GBP: 0.570688,
-      GBP_CAD: 1.752270,
+      GBP_CAD: 1.75227094314231,
       CAD_INR: 51.652637,
-      INR_CAD: 0.019360,
+      INR_CAD: 0.0193600957875587,
 
       EUR_GBP: 0.874485,
-      GBP_EUR: 1.143530,
+      GBP_EUR: 1.1435301920559,
       EUR_INR: 79.149117,
-      INR_EUR: 0.012634,
+      INR_EUR: 0.0126343797366684,
 
       GBP_INR: 90.509361,
-      INR_GBP: 0.011049,
+      INR_GBP: 0.0110485809307614,
   };
   return rateTable;
 }
