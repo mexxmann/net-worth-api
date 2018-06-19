@@ -19,6 +19,51 @@ function getInitialModel() {
         valueBig: Big(4000),
         category: 'Cash and Investments',
       },
+      'Rainy Day Fund': {
+        interestRateBig: Big(0),
+        valueBig: Big(506),
+        category: 'Cash and Investments',
+      },
+      'Savings for Fun': {
+        interestRateBig: Big(0),
+        valueBig: Big(5000),
+        category: 'Cash and Investments',
+      },
+      'Savings for Travel': {
+        interestRateBig: Big(0),
+        valueBig: Big(400),
+        category: 'Cash and Investments',
+      },
+      'Savings for Personal Development': {
+        interestRateBig: Big(1.5),
+        valueBig: Big(200),
+        category: 'Cash and Investments',
+      },
+      'Investment 1': {
+        interestRateBig: Big(2.3),
+        valueBig: Big(5000),
+        category: 'Cash and Investments',
+      },
+      'Investment 2': {
+        interestRateBig: Big(2),
+        valueBig: Big(60000),
+        category: 'Cash and Investments',
+      },
+      'Investment 3': {
+        interestRateBig: Big(5),
+        valueBig: Big(30000),
+        category: 'Cash and Investments',
+      },
+      'Investment 4': {
+        interestRateBig: Big(10),
+        valueBig: Big(50000),
+        category: 'Cash and Investments',
+      },
+      'Investment 5': {
+        interestRateBig: Big(0),
+        valueBig: Big(24000),
+        category: 'Cash and Investments',
+      },
       'Primary Home': {
         interestRateBig: Big(1),
         valueBig: Big(4555000),
@@ -53,6 +98,18 @@ function getInitialModel() {
         monthlyPaymentBig: Big(3500),
         interestRateBig: Big(5.4),
         valueBig: Big(622634),
+        category: 'Long Term Debt',
+      },
+      'Line of Credit': {
+        monthlyPaymentBig: Big(500),
+        interestRateBig: Big(5),
+        valueBig: Big(10000),
+        category: 'Long Term Debt',
+      },
+      'Investment Loan': {
+        monthlyPaymentBig: Big(700),
+        interestRateBig: Big(6),
+        valueBig: Big(10000),
         category: 'Long Term Debt',
       },
     },
