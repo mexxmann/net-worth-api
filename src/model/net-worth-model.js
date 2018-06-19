@@ -154,6 +154,10 @@ function computeFutureNetWorth(assetBalanceSheet, liabilitiesBalanceSheet) {
 function computeLineItemTotal(balanceSheetData) {
   let total = Big(0);
   Object.keys(balanceSheetData).forEach((key) => {
+    const a = balanceSheetData[key].valueBig;
+    if (a instanceof Big === false && a instanceof String === false && typeof a !== 'string') {
+      util.logWithDate(`********* item ${key} was a float!!!!! ->`, a);
+    }
     total = total.plus(util.convertToBig(balanceSheetData[key].valueBig, Big(0)));
   });
   return total;
@@ -176,7 +180,7 @@ function initializeOutputBalanceSheetItems(inputBalanceSheetData, rateBig) {
     const localRateBig = util.convertToBig(rateBig, Big(1));
     if (localRateBig.eq(1) === false) {
       outputBalanceSheetData[key].valueBig =
-        outputBalanceSheetData[key].valueBig.times(localRateBig);
+        util.convertToBig(outputBalanceSheetData[key].valueBig, Big(0)).times(localRateBig);
     }
   });
   return outputBalanceSheetData;

@@ -136,7 +136,7 @@ describe('NetWorth Model - computeOutputModel', () => {
     }).catch((e) => { done(e); });
   });
 
-  it('Handles currency conversion', (done) => {
+  it('Handles currency conversion, and also with string inputs', (done) => {
     const inputModel = {
       assets: {
         LineItem01: {
@@ -145,7 +145,7 @@ describe('NetWorth Model - computeOutputModel', () => {
       },
       liabilities: {
         LineItem01: {
-          valueBig: Big(1),
+          valueBig: '1', // string input
         },
       },
       currency: 'USD',
