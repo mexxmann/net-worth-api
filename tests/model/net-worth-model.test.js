@@ -1,4 +1,5 @@
 const { expect } = require('chai');
+const Big = require('big.js');
 
 const netWorthModel = require('../../src/model/net-worth-model');
 
@@ -16,26 +17,26 @@ describe('NetWorth Model - computeOutputModel', () => {
     const inputModel = {
       assets: {
         LineItem01: {
-          value: 1,
+          valueBig: Big(1),
         },
         LineItem02: {
-          value: 2,
+          valueBig: Big(2),
         },
       },
       liabilities: {
         LineItem01: {
-          value: 1,
+          valueBig: Big(1),
         },
         LineItem02: {
-          value: 1,
+          valueBig: Big(1),
         },
       },
       currency: 'USD',
     };
     netWorthModel.computeOutputModel(inputModel).then((outputModel) => {
-      expect(outputModel.calculated.totalAssets).to.equal(3);
-      expect(outputModel.calculated.totalLiabilities).to.equal(2);
-      expect(outputModel.calculated.netWorth).to.equal(1);
+      expect(outputModel.calculated.totalAssetsBig.eq(3), 'total assets').to.be.true;
+      expect(outputModel.calculated.totalLiabilitiesBig.eq(2), 'total liabilities').to.be.true;
+      expect(outputModel.calculated.netWorthBig.eq(1), 'net worth').to.be.true;
       expect(outputModel.currency).to.equal('USD');
       done();
     }).catch((e) => { done(e); });
@@ -44,9 +45,9 @@ describe('NetWorth Model - computeOutputModel', () => {
   it('Handles null input model', (done) => {
     currencyConversionRateProvider = () => Promise.reject();
     netWorthModel.computeOutputModel(null).then((outputModel) => {
-      expect(outputModel.calculated.totalAssets).to.equal(0);
-      expect(outputModel.calculated.totalLiabilities).to.equal(0);
-      expect(outputModel.calculated.netWorth).to.equal(0);
+      expect(outputModel.calculated.totalAssetsBig.eq(0), 'total assets should be 0').to.be.true;
+      expect(outputModel.calculated.totalLiabilitiesBig.eq(0), 'total liabilies should be 0').to.be.true;
+      expect(outputModel.calculated.netWorthBig.eq(0), 'net worth should be 0').to.be.true;
       expect(outputModel.currency).to.equal('USD');
       done();
     }).catch((e) => { done(e); });
@@ -59,9 +60,9 @@ describe('NetWorth Model - computeOutputModel', () => {
       expect(outputModel.assets).to.exist;
       expect(outputModel.liabilities).to.exist;
       expect(outputModel.currency).to.equal('USD');
-      expect(outputModel.calculated.totalAssets).to.equal(0);
-      expect(outputModel.calculated.totalLiabilities).to.equal(0);
-      expect(outputModel.calculated.netWorth).to.equal(0);
+      expect(outputModel.calculated.totalAssetsBig.eq(0), 'total assets should be 0').to.be.true;
+      expect(outputModel.calculated.totalLiabilitiesBig.eq(0), 'total liabilies should be 0').to.be.true;
+      expect(outputModel.calculated.netWorthBig.eq(0), 'net worth should be 0').to.be.true;
       done();
     }).catch((e) => { done(e); });
   });
@@ -70,71 +71,122 @@ describe('NetWorth Model - computeOutputModel', () => {
     const inputModel = {
       assets: {
         LineItem01: {
-          value: 'a',
+          valueBig: 'a',
         },
       },
       liabilities: {
         LineItem01: {
-          value: 1,
+          valueBig: Big(1),
         },
       },
       currency: 'USD',
     };
     netWorthModel.computeOutputModel(inputModel).then((outputModel) => {
-      expect(outputModel.calculated.totalAssets).to.equal(0);
-      expect(outputModel.calculated.totalLiabilities).to.equal(1);
-      expect(outputModel.calculated.netWorth).to.equal(-1);
+      expect(outputModel.calculated.totalAssetsBig.eq(0), 'total assets should be 0').to.be.true;
+      expect(outputModel.calculated.totalLiabilitiesBig.eq(1), 'total liabilies should be 1').to.be.true;
+      expect(outputModel.calculated.netWorthBig.eq(-1), 'net worth should be -1').to.be.true;
       done();
     }).catch((e) => { done(e); });
   });
 
-  // TODO: Maybe https://github.com/MikeMcl/decimal.js/ will help...
-  // it('Handles decimals up to a certain precision', (done) => {
-  //   const inputModel = {
-  //     assets: {
-  //       LineItem01: {
-  //         value: 1.01,
-  //       },
-  //       LineItem02: {
-  //         value: 0.01,
-  //       },
-  //     },
-  //     liabilities: {
-  //       LineItem01: {
-  //         value: 1,
-  //       },
-  //     },
-  //     currency: 'USD',
-  //   };
-  //   netWorthModel.computeOutputModel(inputModel).then((outputModel) => {
-  //     expect(outputModel.calculated.totalAssets).to.equal(1.02);
-  //     expect(outputModel.calculated.totalLiabilities).to.equal(1);
-  //     expect(outputModel.calculated.netWorth).to.equal(0.02);
-  //     done();
-  //   }).catch((e) => { done(e); });
-  // });
+  it('Handles decimals without loss of precision', (done) => {
+    const inputModel = {
+      assets: {
+        LineItem01: {
+          valueBig: Big(1.00000001),
+        },
+        LineItem02: {
+          valueBig: Big(0.00000001),
+        },
+      },
+      liabilities: {
+        LineItem01: {
+          valueBig: Big(1),
+        },
+      },
+      currency: 'USD',
+    };
+    netWorthModel.computeOutputModel(inputModel).then((outputModel) => {
+      expect(outputModel.calculated.totalAssetsBig.eq(1.00000002), 'total assets').to.be.true;
+      expect(outputModel.calculated.totalLiabilitiesBig.eq(1), 'total liabilies').to.be.true;
+      expect(outputModel.calculated.netWorthBig.eq(0.00000002), 'net worth').to.be.true;
+      done();
+    }).catch((e) => { done(e); });
+  });
 
   it('Handles currency conversion', (done) => {
     const inputModel = {
       assets: {
         LineItem01: {
-          value: 2,
+          valueBig: Big(2),
         },
       },
       liabilities: {
         LineItem01: {
-          value: 1,
+          valueBig: Big(1),
         },
       },
       currency: 'USD',
     };
 
-    currencyConversionRateProvider = () => Promise.resolve(2);
+    currencyConversionRateProvider = () => Promise.resolve(Big(2));
     netWorthModel.computeOutputModel(inputModel, 'EUR', currencyConversionRateProvider).then((outputModel) => {
       expect(outputModel.currency).to.equal('EUR');
-      expect(outputModel.calculated.totalAssets).to.equal(4);
-      expect(outputModel.calculated.totalLiabilities).to.equal(2);
-      expect(outputModel.calculated.netWorth).to.equal(2);
+      expect(outputModel.calculated.totalAssetsBig.eq(4), 'total assets:').to.be.true;
+      expect(outputModel.calculated.totalLiabilitiesBig.eq(2), 'total liabilies').to.be.true;
+      expect(outputModel.calculated.netWorthBig.eq(2), 'net worth').to.be.true;
+      done();
+    }).catch((e) => { done(e); });
+  });
+
+  it('Handles currency conversion with non-Big.js converion rates returned by 3rd-party rate service, by converting to Big.js', (done) => {
+    const inputModel = {
+      assets: {
+        LineItem01: {
+          valueBig: Big(2),
+        },
+      },
+      liabilities: {
+        LineItem01: {
+          valueBig: Big(1),
+        },
+      },
+      currency: 'USD',
+    };
+
+    // Test that it can handle a regular JS number (should convert to Big)
+    currencyConversionRateProvider = () => Promise.resolve(2);
+    netWorthModel.computeOutputModel(inputModel, 'EUR', currencyConversionRateProvider).then((outputModel) => {
+      expect(outputModel.calculated.totalAssetsBig.eq(4), 'total assets:').to.be.true;
+    }).catch((e) => { done(e); });
+
+    // Test that it can handle a JS String (should convert to Big)
+    currencyConversionRateProvider2 = () => Promise.resolve("2");
+    netWorthModel.computeOutputModel(inputModel, 'EUR', currencyConversionRateProvider).then((outputModel) => {
+      expect(outputModel.calculated.totalAssetsBig.eq(4), 'total assets:').to.be.true;
+      done();
+    }).catch((e) => { done(e); });
+  });
+
+  it('Ignores bad conversion rates', (done) => {
+    const inputModel = {
+      assets: {
+        LineItem01: {
+          valueBig: Big(2),
+        },
+      },
+      liabilities: {
+        LineItem01: {
+          valueBig: Big(1),
+        },
+      },
+      currency: 'USD',
+    };
+
+    // Should not apply a bad conversion rate
+    currencyConversionRateProvider2 = () => Promise.resolve("a");
+    netWorthModel.computeOutputModel(inputModel, 'USD', currencyConversionRateProvider).then((outputModel) => {
+      expect(outputModel.calculated.totalAssetsBig.eq(2), 'total assets:').to.be.true;
       done();
     }).catch((e) => { done(e); });
   });
@@ -143,12 +195,12 @@ describe('NetWorth Model - computeOutputModel', () => {
     const inputModel = {
       assets: {
         LineItem01: {
-          value: 2,
+          valueBig: Big(2),
         },
       },
       liabilities: {
         LineItem01: {
-          value: 1,
+          valueBig: Big(1),
         },
       },
       currency: 'USD',
@@ -157,9 +209,9 @@ describe('NetWorth Model - computeOutputModel', () => {
     currencyConversionRateProvider = () => Promise.reject();
     netWorthModel.computeOutputModel(inputModel, 'EUR', currencyConversionRateProvider).then((outputModel) => {
       expect(outputModel.currency).to.equal('USD');
-      expect(outputModel.calculated.totalAssets).to.equal(2);
-      expect(outputModel.calculated.totalLiabilities).to.equal(1);
-      expect(outputModel.calculated.netWorth).to.equal(1);
+      expect(outputModel.calculated.totalAssetsBig.eq(2), 'total assets:').to.be.true;
+      expect(outputModel.calculated.totalLiabilitiesBig.eq(1), 'total liabilies').to.be.true;
+      expect(outputModel.calculated.netWorthBig.eq(1), 'net worth').to.be.true;
       done();
     }).catch((e) => { done(e); });
   });
@@ -170,24 +222,24 @@ describe('NetWorth Model - computeFutureNetWorth', () => {
     const inputModel = {
       assets: {
         LineItem01: {
-          interestRate: 50,
-          value: 2000,
+          interestRateBig: Big(50),
+          valueBig: Big(2000),
         },
         LineItem02: {
-          interestRate: 25,
-          value: 1000,
+          interestRateBig: Big(25),
+          valueBig: Big(1000),
         },
       },
       liabilities: {
         LineItem01: {
-          interestRate: 5,
-          monthlyPayment: 50,
-          value: 1000,
+          interestRateBig: Big(5),
+          monthlyPaymentBig: Big(50),
+          valueBig: Big(1000),
         },
         LineItem02: {
-          interestRate: 10,
-          monthlyPayment: 20,
-          value: 500,
+          interestRateBig: Big(10),
+          monthlyPaymentBig: Big(20),
+          valueBig: Big(500),
         },
       },
       currency: 'USD',
@@ -196,51 +248,83 @@ describe('NetWorth Model - computeFutureNetWorth', () => {
     const futureNetWorth = netWorthModel.computeFutureNetWorth(inputModel.assets, inputModel.liabilities);
 
     const year01LineItem01Assets =
-      inputModel.assets.LineItem01.value +
-      (inputModel.assets.LineItem01.value * (inputModel.assets.LineItem01.interestRate / 100));
+      inputModel.assets.LineItem01.valueBig.plus(
+        inputModel.assets.LineItem01.valueBig.times(inputModel.assets.LineItem01.interestRateBig.div(100)),
+      );
     const year01LineItem02Assets =
-      inputModel.assets.LineItem02.value +
-      (inputModel.assets.LineItem02.value * (inputModel.assets.LineItem02.interestRate / 100));
+      inputModel.assets.LineItem02.valueBig.plus(
+        inputModel.assets.LineItem02.valueBig.times(inputModel.assets.LineItem02.interestRateBig.div(100)),
+      );
     const year01LineItem01Liabilities =
-      (inputModel.liabilities.LineItem01.value +
-      (inputModel.liabilities.LineItem01.value * (inputModel.liabilities.LineItem01.interestRate / 100))) -
-      (inputModel.liabilities.LineItem01.monthlyPayment * 12);
+      inputModel.liabilities.LineItem01.valueBig.plus(
+        inputModel.liabilities.LineItem01.valueBig.times(
+          inputModel.liabilities.LineItem01.interestRateBig.div(100),
+        ),
+      ).minus(
+        inputModel.liabilities.LineItem01.monthlyPaymentBig.times(12),
+      );
     const year01LineItem02Liabilities =
-      (inputModel.liabilities.LineItem02.value +
-      (inputModel.liabilities.LineItem02.value * (inputModel.liabilities.LineItem02.interestRate / 100))) -
-      (inputModel.liabilities.LineItem02.monthlyPayment * 12);
+      inputModel.liabilities.LineItem02.valueBig.plus(
+        inputModel.liabilities.LineItem02.valueBig.times(
+          inputModel.liabilities.LineItem02.interestRateBig.div(100),
+        ),
+      ).minus(
+        inputModel.liabilities.LineItem02.monthlyPaymentBig.times(12),
+      );
     const year01NetWorth =
-      (year01LineItem01Assets + year01LineItem02Assets) -
-      (year01LineItem01Liabilities > 0 ? year01LineItem01Liabilities : 0) -
-      (year01LineItem02Liabilities > 0 ? year01LineItem02Liabilities : 0);
-    expect(futureNetWorth[0]).to.equal(year01NetWorth);
-    console.log('year01NetWorth: ', year01NetWorth);
+      year01LineItem01Assets.plus(year01LineItem02Assets).minus(
+        year01LineItem01Liabilities.gt(0) ? year01LineItem01Liabilities : Big(0),
+      ).minus(
+        year01LineItem02Liabilities.gt(0) ? year01LineItem02Liabilities : Big(0),
+      );
+    expect(
+      futureNetWorth[0].eq(year01NetWorth),
+      `First future year net worth did not equal the expected total
+      - expected: ${year01NetWorth.toString()},
+      actual: ${futureNetWorth[0].toString()}`,
+    ).to.be.true;
 
     const year02LineItem01Assets =
-      year01LineItem01Assets +
-      (year01LineItem01Assets * (inputModel.assets.LineItem01.interestRate / 100));
+      year01LineItem01Assets.plus(
+        year01LineItem01Assets.times(inputModel.assets.LineItem01.interestRateBig.div(100)),
+      );
     const year02LineItem02Assets =
-      year01LineItem02Assets +
-      (year01LineItem02Assets * (inputModel.assets.LineItem02.interestRate / 100));
+      year01LineItem02Assets.plus(
+        year01LineItem02Assets.times(inputModel.assets.LineItem02.interestRateBig.div(100)),
+      );
     const year02LineItem01Liabilities =
-      (year01LineItem01Liabilities +
-      (year01LineItem01Liabilities * (inputModel.liabilities.LineItem01.interestRate / 100))) -
-      (inputModel.liabilities.LineItem01.monthlyPayment * 12);
+      year01LineItem01Liabilities.plus(
+        year01LineItem01Liabilities.times(
+          inputModel.liabilities.LineItem01.interestRateBig.div(100),
+        ),
+      ).minus(
+        inputModel.liabilities.LineItem01.monthlyPaymentBig.times(12),
+      );
     const year02LineItem02Liabilities =
-      (year01LineItem02Liabilities +
-      (year01LineItem02Liabilities * (inputModel.liabilities.LineItem02.interestRate / 100))) -
-      (inputModel.liabilities.LineItem02.monthlyPayment * 12);
+      year01LineItem02Liabilities.plus(
+        year01LineItem02Liabilities.times(
+          inputModel.liabilities.LineItem02.interestRateBig.div(100),
+        ),
+      ).minus(
+        inputModel.liabilities.LineItem02.monthlyPaymentBig.times(12),
+      );
     const year02NetWorth =
-      (year02LineItem01Assets + year02LineItem02Assets) -
-      (year02LineItem01Liabilities > 0 ? year02LineItem01Liabilities : 0) -
-      (year02LineItem02Liabilities > 0 ? year02LineItem02Liabilities : 0);
-    expect(futureNetWorth[1]).to.equal(year02NetWorth);
-    console.log('year02NetWorth: ', year02NetWorth);
+      year02LineItem01Assets.plus(year02LineItem02Assets).minus(
+        year02LineItem01Liabilities.gt(0) ? year02LineItem01Liabilities : Big(0),
+      ).minus(
+        year02LineItem02Liabilities.gt(0) ? year02LineItem02Liabilities : Big(0),
+      );
+    expect(
+      futureNetWorth[1].eq(year02NetWorth),
+      `Second future year net worth did not equal the expected total
+        - expected: ${year02NetWorth.toString()},
+        actual: ${futureNetWorth[1].toString()}`,
+    ).to.be.true;
   });
 
   it('handles null inputs', () => {
     const futureNetWorth = netWorthModel.computeFutureNetWorth(null, null);
-    expect(futureNetWorth[0]).to.equal(0);
+    expect(futureNetWorth[0].eq(0), 'Future net worth should be 0 since no input').to.be.true;
   });
 
   it('handles empty inputs', () => {
@@ -253,6 +337,6 @@ describe('NetWorth Model - computeFutureNetWorth', () => {
     };
 
     const futureNetWorth = netWorthModel.computeFutureNetWorth(inputModel.assets, inputModel.liabilities);
-    expect(futureNetWorth[0]).to.equal(0);
+    expect(futureNetWorth[0].eq(0), 'Future net worth should be 0 since no input').to.be.true;
   });
 });

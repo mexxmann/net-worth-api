@@ -15,7 +15,7 @@
             "request": "launch",
             "name": "Unit Tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "args": ["${workspaceFolder}/tests/**/*.test.js"]
+            "args": ["${workspaceFolder}/tests/**/*.test.js", "--grep", "should compute Net Worth"]
         }
     ]
 }

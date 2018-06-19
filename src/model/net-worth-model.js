@@ -1,4 +1,5 @@
 const util = require('../api/util');
+const Big = require('big.js');
 
 /**
  * Returns an intialized model.
@@ -9,49 +10,49 @@ function getInitialModel() {
   return {
     assets: {
       Chequing: {
-        interestRate: 0,
-        value: 2000,
+        interestRateBig: Big(0),
+        valueBig: Big(2000),
         category: 'Cash and Investments',
       },
       'Savings for Taxes': {
-        interestRate: 5,
-        value: 4000,
+        interestRateBig: Big(5),
+        valueBig: Big(4000),
         category: 'Cash and Investments',
       },
       'Primary Home': {
-        interestRate: 1,
-        value: 4555000,
+        interestRateBig: Big(1),
+        valueBig: Big(4555000),
         category: 'Long Term Assets',
       },
       'Second Home': {
-        interestRate: 2,
-        value: 1564321,
+        interestRateBig: Big(2),
+        valueBig: Big(1564321),
         category: 'Long Term Assets',
       },
     },
     liabilities: {
       'Credit Card 1': {
-        monthlyPayment: 200,
-        interestRate: 50,
-        value: 4342,
+        monthlyPaymentBig: Big(200),
+        interestRateBig: Big(50),
+        valueBig: Big(4342),
         category: 'Short Term Liabilities',
       },
       'Credit Card 2': {
-        monthlyPayment: 150,
-        interestRate: 22,
-        value: 322,
+        monthlyPaymentBig: Big(150),
+        interestRateBig: Big(22),
+        valueBig: Big(322),
         category: 'Short Term Liabilities',
       },
       'Mortgage 1': {
-        monthlyPayment: 2000,
-        interestRate: 2.6,
-        value: 250999,
+        monthlyPaymentBig: Big(2000),
+        interestRateBig: Big(2.6),
+        valueBig: Big(250999),
         category: 'Long Term Debt',
       },
       'Mortgage 2': {
-        monthlyPayment: 3500,
-        interestRate: 5.4,
-        value: 622634,
+        monthlyPaymentBig: Big(3500),
+        interestRateBig: Big(5.4),
+        valueBig: Big(622634),
         category: 'Long Term Debt',
       },
     },
@@ -62,58 +63,65 @@ function getInitialModel() {
 // Helper function used from computeFutureNetWorth
 // Note: allYearsAssetBalanceSheet parameter is mutated - would be nice to find a way not to do that!
 computeYearlyBalanceForAllAssets = (assetBalanceSheet, year, allYearsAssetBalanceSheet) => {
-  let currentYearBalanceForAllAssets = 0;
+  let currentYearBalanceForAllAssetsBig = Big(0);
   const currentYearAssetBalanceSheet = {};
   if (assetBalanceSheet && Object.keys(assetBalanceSheet).length > 0) {
     Object.keys(assetBalanceSheet).forEach((key) => {
-      let currentYearBalanceForAsset = 0;
+      let currentYearBalanceForAssetBig = Big(0);
       if (year === 0) {
-        if (util.isNumeric(assetBalanceSheet[key].value)) {
-          currentYearBalanceForAsset = assetBalanceSheet[key].value;
+        if (assetBalanceSheet[key].valueBig instanceof Big) {
+          currentYearBalanceForAssetBig = assetBalanceSheet[key].valueBig;
         }
       } else {
-        currentYearBalanceForAsset = allYearsAssetBalanceSheet[year - 1][key];
+        currentYearBalanceForAssetBig = allYearsAssetBalanceSheet[year - 1][key];
       }
-      currentYearBalanceForAsset += currentYearBalanceForAsset * (assetBalanceSheet[key].interestRate / 100);
+      currentYearBalanceForAssetBig = currentYearBalanceForAssetBig.plus(
+        currentYearBalanceForAssetBig.times(assetBalanceSheet[key].interestRateBig.div(100)),
+      );
 
-      currentYearAssetBalanceSheet[key] = currentYearBalanceForAsset;
-      currentYearBalanceForAllAssets += currentYearBalanceForAsset;
+      currentYearAssetBalanceSheet[key] = currentYearBalanceForAssetBig;
+      currentYearBalanceForAllAssetsBig = currentYearBalanceForAllAssetsBig.plus(currentYearBalanceForAssetBig);
     });
   }
   allYearsAssetBalanceSheet.push(currentYearAssetBalanceSheet);
-  return currentYearBalanceForAllAssets;
+  return currentYearBalanceForAllAssetsBig;
 };
 
 // Helper function used from computeFutureNetWorth
 // Note: allYearsLiabilitiesBalanceSheet parameter is mutated - would be nice to find a way not to do that!
 computeYearlyBalanceForAllLiabilities = (liabilitiesBalanceSheet, year, allYearsLiabilitiesBalanceSheet) => {
-  let currentYearBalanceForAllLiabilities = 0;
+  let currentYearBalanceForAllLiabilitiesBig = Big(0);
   const currentYearLiabilitiesBalanceSheet = {};
   if (liabilitiesBalanceSheet && Object.keys(liabilitiesBalanceSheet).length > 0) {
     Object.keys(liabilitiesBalanceSheet).forEach((key) => {
-      let currentYearBalanceForLiability = 0;
+      let currentYearBalanceForLiabilityBig = Big(0);
       if (year === 0) {
-        if (util.isNumeric(liabilitiesBalanceSheet[key].value)) {
-          currentYearBalanceForLiability = liabilitiesBalanceSheet[key].value;
+        if (liabilitiesBalanceSheet[key].valueBig instanceof Big) {
+          currentYearBalanceForLiabilityBig = liabilitiesBalanceSheet[key].valueBig;
         }
       } else {
-        currentYearBalanceForLiability = allYearsLiabilitiesBalanceSheet[year - 1][key];
+        currentYearBalanceForLiabilityBig = allYearsLiabilitiesBalanceSheet[year - 1][key];
       }
 
       // Original Principal + interest - payments over year
-      currentYearBalanceForLiability =
-        (currentYearBalanceForLiability +
-        (currentYearBalanceForLiability * (liabilitiesBalanceSheet[key].interestRate / 100))) -
-        (liabilitiesBalanceSheet[key].monthlyPayment * 12);
+      currentYearBalanceForLiabilityBig =
+        currentYearBalanceForLiabilityBig.plus(
+          currentYearBalanceForLiabilityBig.times(
+            liabilitiesBalanceSheet[key].interestRateBig.div(100),
+          ),
+        ).minus(
+          liabilitiesBalanceSheet[key].monthlyPaymentBig.times(12),
+        );
 
-      currentYearLiabilitiesBalanceSheet[key] = currentYearBalanceForLiability;
-      if (currentYearBalanceForLiability > 0) {
-        currentYearBalanceForAllLiabilities += currentYearBalanceForLiability;
+      currentYearLiabilitiesBalanceSheet[key] = currentYearBalanceForLiabilityBig;
+      if (currentYearBalanceForLiabilityBig.gt(0)) {
+        currentYearBalanceForAllLiabilitiesBig =
+          currentYearBalanceForAllLiabilitiesBig.plus(currentYearBalanceForLiabilityBig);
       }
     });
   }
   allYearsLiabilitiesBalanceSheet.push(currentYearLiabilitiesBalanceSheet);
-  return currentYearBalanceForAllLiabilities;
+  return currentYearBalanceForAllLiabilitiesBig;
 };
 
 /**
@@ -128,19 +136,19 @@ function computeFutureNetWorth(assetBalanceSheet, liabilitiesBalanceSheet) {
   const allYearsLiabilitiesBalanceSheet = [];
 
   for (let year = 0; year < 20; year += 1) {
-    const currentYearBalanceForAllAssets = computeYearlyBalanceForAllAssets(
+    const currentYearBalanceForAllAssetsBig = computeYearlyBalanceForAllAssets(
       assetBalanceSheet,
       year,
       allYearsAssetBalanceSheet,
     );
 
-    const currentYearBalanceForAllLiabilities = computeYearlyBalanceForAllLiabilities(
+    const currentYearBalanceForAllLiabilitiesBig = computeYearlyBalanceForAllLiabilities(
       liabilitiesBalanceSheet,
       year,
       allYearsLiabilitiesBalanceSheet,
     );
 
-    futureNetWorth.push(currentYearBalanceForAllAssets - currentYearBalanceForAllLiabilities);
+    futureNetWorth.push(currentYearBalanceForAllAssetsBig.minus(currentYearBalanceForAllLiabilitiesBig));
   }
 
   return futureNetWorth;
@@ -149,13 +157,13 @@ function computeFutureNetWorth(assetBalanceSheet, liabilitiesBalanceSheet) {
 /**
  * Adds up the values for line-items an a Balance Sheet class - eg adds up all Assets or Liabilities
  * @param {Object} balanceSheetData The line-items to add
- * @returns {number} The total
+ * @returns {Big} The total
  */
 function computeLineItemTotal(balanceSheetData) {
-  let total = 0;
+  let total = Big(0);
   Object.keys(balanceSheetData).forEach((key) => {
-    if (util.isNumeric(balanceSheetData[key].value)) {
-      total += balanceSheetData[key].value;
+    if (balanceSheetData[key].valueBig instanceof Big) {
+      total = total.plus(balanceSheetData[key].valueBig);
     }
   });
   return total;
@@ -166,17 +174,23 @@ function computeLineItemTotal(balanceSheetData) {
  * and applies currency conversion if rate <> 1
  * Avoids mutating the input
  * @param {*} inputBalanceSheetData The input
- * @param {*} rate The conversion rate
+ * @param {Big} rateBig The conversion rate
  * @returns {Object} The output Balance Sheet items
  */
-function initializeOutputBalanceSheetItems(inputBalanceSheetData, rate) {
+function initializeOutputBalanceSheetItems(inputBalanceSheetData, rateBig) {
   const outputBalanceSheetData = {};
   Object.keys(inputBalanceSheetData).forEach((key) => {
     outputBalanceSheetData[key] = Object.assign({}, inputBalanceSheetData[key]);
 
+    let localRateBig = rateBig;
+    if (localRateBig instanceof Big === false) {
+      localRateBig = util.convertToBig(localRateBig);
+    }
+
     // Apply currency conversion if necessary
-    if (rate !== 1) {
-      outputBalanceSheetData[key].value *= rate;
+    if (localRateBig instanceof Big && !localRateBig.eq(1)) {
+      outputBalanceSheetData[key].valueBig =
+        outputBalanceSheetData[key].valueBig.times(localRateBig);
     }
   });
   return outputBalanceSheetData;
@@ -184,23 +198,26 @@ function initializeOutputBalanceSheetItems(inputBalanceSheetData, rate) {
 
 /**
  * See computeOutputModel for purpose - this is a helper called from that method to avoid duplicating code
- * @param {*} inputModel The input model
- * @param {*} currencyTo The currency requested to convert into
- * @param {*} currencyConversionRate The currency conversion rate
+ * @param {Object} inputModel The input model
+ * @param {string} currencyTo The currency requested to convert into
+ * @param {Big} currencyConversionRateBig The currency conversion rate
  * @returns {Object} The output model
  */
-function computeOutputModelInternal(inputModel, currencyTo, currencyConversionRate) {
+function computeOutputModelInternal(inputModel, currencyTo, currencyConversionRateBig) {
   const outputModel = {};
 
-  outputModel.assets = initializeOutputBalanceSheetItems(inputModel.assets, currencyConversionRate);
-  outputModel.liabilities = initializeOutputBalanceSheetItems(inputModel.liabilities, currencyConversionRate);
+  outputModel.assets = initializeOutputBalanceSheetItems(inputModel.assets, currencyConversionRateBig);
+  outputModel.liabilities = initializeOutputBalanceSheetItems(inputModel.liabilities, currencyConversionRateBig);
   outputModel.currency = currencyTo;
 
   outputModel.calculated = {};
-  outputModel.calculated.totalAssets = computeLineItemTotal(outputModel.assets);
-  outputModel.calculated.totalLiabilities = computeLineItemTotal(outputModel.liabilities);
-  outputModel.calculated.netWorth = outputModel.calculated.totalAssets - outputModel.calculated.totalLiabilities;
-  outputModel.calculated.futureNetWorth = computeFutureNetWorth(outputModel.assets, outputModel.liabilities);
+  outputModel.calculated.totalAssetsBig = computeLineItemTotal(outputModel.assets);
+  outputModel.calculated.totalLiabilitiesBig = computeLineItemTotal(outputModel.liabilities);
+  outputModel.calculated.netWorthBig =
+    outputModel.calculated.totalAssetsBig.minus(outputModel.calculated.totalLiabilitiesBig);
+
+  // TODO: Put me back
+  // outputModel.calculated.futureNetWorth = computeFutureNetWorth(outputModel.assets, outputModel.liabilities);
 
   return outputModel;
 }
@@ -235,12 +252,13 @@ function computeOutputModel(inputModel, currencyTo, currencyConversionRateProvid
   const localInputModel = sanitizeInputModel(inputModel);
 
   let targetCurrency = localInputModel.currency;
-  let providerPromise = Promise.resolve(1); // Default to a rate of 1 (no conversion)
+  let providerPromise = Promise.resolve(Big(1)); // Default to a rate of 1 (no conversion)
   if (currencyTo && currencyTo !== localInputModel.currency && currencyConversionRateProvider) {
     targetCurrency = currencyTo;
     providerPromise = currencyConversionRateProvider(localInputModel.currency, currencyTo);
   }
 
+  // TODO: This code isn't doing what I wanted; maybe the error should be handled upstream
   return providerPromise.then((currencyConversionRate) => {
     return computeOutputModelInternal(localInputModel, targetCurrency, currencyConversionRate);
   }).catch((err) => {
