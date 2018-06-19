@@ -67,7 +67,29 @@ describe('NetWorth Model - computeOutputModel', () => {
     }).catch((e) => { done(e); });
   });
 
-  it('Handles non-numeric values', (done) => {
+  it('Handles string representation of numbers (for serialized data)', (done) => {
+    const inputModel = {
+      assets: {
+        LineItem01: {
+          valueBig: '2.5',
+        },
+      },
+      liabilities: {
+        LineItem01: {
+          valueBig: '1.4',
+        },
+      },
+      currency: 'USD',
+    };
+    netWorthModel.computeOutputModel(inputModel).then((outputModel) => {
+      expect(outputModel.calculated.totalAssetsBig.eq(2.5), 'total assets').to.be.true;
+      expect(outputModel.calculated.totalLiabilitiesBig.eq(1.4), 'total liabilies').to.be.true;
+      expect(outputModel.calculated.netWorthBig.eq(1.1), 'net worth').to.be.true;
+      done();
+    }).catch((e) => { done(e); });
+  });
+
+  it('Ignores non-numeric values', (done) => {
     const inputModel = {
       assets: {
         LineItem01: {
@@ -139,7 +161,8 @@ describe('NetWorth Model - computeOutputModel', () => {
     }).catch((e) => { done(e); });
   });
 
-  it('Handles currency conversion with non-Big.js converion rates returned by 3rd-party rate service, by converting to Big.js', (done) => {
+  it(`Handles currency conversion with non-Big.js converion rates returned by 3rd-party rate service,
+  by converting to Big.js`, (done) => {
     const inputModel = {
       assets: {
         LineItem01: {
@@ -161,7 +184,7 @@ describe('NetWorth Model - computeOutputModel', () => {
     }).catch((e) => { done(e); });
 
     // Test that it can handle a JS String (should convert to Big)
-    currencyConversionRateProvider2 = () => Promise.resolve("2");
+    currencyConversionRateProvider2 = () => Promise.resolve('2');
     netWorthModel.computeOutputModel(inputModel, 'EUR', currencyConversionRateProvider).then((outputModel) => {
       expect(outputModel.calculated.totalAssetsBig.eq(4), 'total assets:').to.be.true;
       done();
@@ -184,7 +207,7 @@ describe('NetWorth Model - computeOutputModel', () => {
     };
 
     // Should not apply a bad conversion rate
-    currencyConversionRateProvider2 = () => Promise.resolve("a");
+    currencyConversionRateProvider2 = () => Promise.resolve('a');
     netWorthModel.computeOutputModel(inputModel, 'USD', currencyConversionRateProvider).then((outputModel) => {
       expect(outputModel.calculated.totalAssetsBig.eq(2), 'total assets:').to.be.true;
       done();

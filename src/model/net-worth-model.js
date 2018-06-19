@@ -61,57 +61,49 @@ function getInitialModel() {
 }
 
 // Helper function used from computeFutureNetWorth
-// Note: allYearsAssetBalanceSheet parameter is mutated - would be nice to find a way not to do that!
-computeYearlyBalanceForAllAssets = (assetBalanceSheet, year, allYearsAssetBalanceSheet) => {
+// Note: allYearsBalanceSheet parameter is mutated - would be nice to find a way not to do that!
+computeYearlyBalanceForAllAssets = (balanceSheet, year, allYearsBalanceSheet) => {
   let currentYearBalanceForAllAssetsBig = Big(0);
   const currentYearAssetBalanceSheet = {};
-  if (assetBalanceSheet && Object.keys(assetBalanceSheet).length > 0) {
-    Object.keys(assetBalanceSheet).forEach((key) => {
-      let currentYearBalanceForAssetBig = Big(0);
-      if (year === 0) {
-        if (assetBalanceSheet[key].valueBig instanceof Big) {
-          currentYearBalanceForAssetBig = assetBalanceSheet[key].valueBig;
-        }
-      } else {
-        currentYearBalanceForAssetBig = allYearsAssetBalanceSheet[year - 1][key];
+  if (balanceSheet && Object.keys(balanceSheet).length > 0) {
+    Object.keys(balanceSheet).forEach((key) => {
+      let currentYearBalanceForAssetBig = util.convertToBig(balanceSheet[key].valueBig, Big(0));
+      if (year > 0) {
+        currentYearBalanceForAssetBig = allYearsBalanceSheet[year - 1][key];
       }
+      const interestRateBig = util.convertToBig(balanceSheet[key].interestRateBig, Big(0));
       currentYearBalanceForAssetBig = currentYearBalanceForAssetBig.plus(
-        currentYearBalanceForAssetBig.times(assetBalanceSheet[key].interestRateBig.div(100)),
+        currentYearBalanceForAssetBig.times(interestRateBig.div(100)),
       );
 
       currentYearAssetBalanceSheet[key] = currentYearBalanceForAssetBig;
       currentYearBalanceForAllAssetsBig = currentYearBalanceForAllAssetsBig.plus(currentYearBalanceForAssetBig);
     });
   }
-  allYearsAssetBalanceSheet.push(currentYearAssetBalanceSheet);
+  allYearsBalanceSheet.push(currentYearAssetBalanceSheet);
   return currentYearBalanceForAllAssetsBig;
 };
 
 // Helper function used from computeFutureNetWorth
-// Note: allYearsLiabilitiesBalanceSheet parameter is mutated - would be nice to find a way not to do that!
-computeYearlyBalanceForAllLiabilities = (liabilitiesBalanceSheet, year, allYearsLiabilitiesBalanceSheet) => {
+// Note: allYearsBalanceSheet parameter is mutated - would be nice to find a way not to do that!
+computeYearlyBalanceForAllLiabilities = (balanceSheet, year, allYearsBalanceSheet) => {
   let currentYearBalanceForAllLiabilitiesBig = Big(0);
   const currentYearLiabilitiesBalanceSheet = {};
-  if (liabilitiesBalanceSheet && Object.keys(liabilitiesBalanceSheet).length > 0) {
-    Object.keys(liabilitiesBalanceSheet).forEach((key) => {
-      let currentYearBalanceForLiabilityBig = Big(0);
-      if (year === 0) {
-        if (liabilitiesBalanceSheet[key].valueBig instanceof Big) {
-          currentYearBalanceForLiabilityBig = liabilitiesBalanceSheet[key].valueBig;
-        }
-      } else {
-        currentYearBalanceForLiabilityBig = allYearsLiabilitiesBalanceSheet[year - 1][key];
+  if (balanceSheet && Object.keys(balanceSheet).length > 0) {
+    Object.keys(balanceSheet).forEach((key) => {
+      let currentYearBalanceForLiabilityBig = util.convertToBig(balanceSheet[key].valueBig, Big(0));
+      if (year > 0) {
+        currentYearBalanceForLiabilityBig = allYearsBalanceSheet[year - 1][key];
       }
+
+      const interestRateBig = util.convertToBig(balanceSheet[key].interestRateBig, Big(0));
+      const monthlyPaymentBig = util.convertToBig(balanceSheet[key].monthlyPaymentBig, Big(0));
 
       // Original Principal + interest - payments over year
       currentYearBalanceForLiabilityBig =
         currentYearBalanceForLiabilityBig.plus(
-          currentYearBalanceForLiabilityBig.times(
-            liabilitiesBalanceSheet[key].interestRateBig.div(100),
-          ),
-        ).minus(
-          liabilitiesBalanceSheet[key].monthlyPaymentBig.times(12),
-        );
+          currentYearBalanceForLiabilityBig.times(interestRateBig.div(100)),
+        ).minus(monthlyPaymentBig.times(12));
 
       currentYearLiabilitiesBalanceSheet[key] = currentYearBalanceForLiabilityBig;
       if (currentYearBalanceForLiabilityBig.gt(0)) {
@@ -120,7 +112,7 @@ computeYearlyBalanceForAllLiabilities = (liabilitiesBalanceSheet, year, allYears
       }
     });
   }
-  allYearsLiabilitiesBalanceSheet.push(currentYearLiabilitiesBalanceSheet);
+  allYearsBalanceSheet.push(currentYearLiabilitiesBalanceSheet);
   return currentYearBalanceForAllLiabilitiesBig;
 };
 
@@ -162,9 +154,7 @@ function computeFutureNetWorth(assetBalanceSheet, liabilitiesBalanceSheet) {
 function computeLineItemTotal(balanceSheetData) {
   let total = Big(0);
   Object.keys(balanceSheetData).forEach((key) => {
-    if (balanceSheetData[key].valueBig instanceof Big) {
-      total = total.plus(balanceSheetData[key].valueBig);
-    }
+    total = total.plus(util.convertToBig(balanceSheetData[key].valueBig, Big(0)));
   });
   return total;
 }
@@ -182,13 +172,9 @@ function initializeOutputBalanceSheetItems(inputBalanceSheetData, rateBig) {
   Object.keys(inputBalanceSheetData).forEach((key) => {
     outputBalanceSheetData[key] = Object.assign({}, inputBalanceSheetData[key]);
 
-    let localRateBig = rateBig;
-    if (localRateBig instanceof Big === false) {
-      localRateBig = util.convertToBig(localRateBig);
-    }
-
     // Apply currency conversion if necessary
-    if (localRateBig instanceof Big && !localRateBig.eq(1)) {
+    const localRateBig = util.convertToBig(rateBig, Big(1));
+    if (localRateBig.eq(1) === false) {
       outputBalanceSheetData[key].valueBig =
         outputBalanceSheetData[key].valueBig.times(localRateBig);
     }
@@ -216,8 +202,7 @@ function computeOutputModelInternal(inputModel, currencyTo, currencyConversionRa
   outputModel.calculated.netWorthBig =
     outputModel.calculated.totalAssetsBig.minus(outputModel.calculated.totalLiabilitiesBig);
 
-  // TODO: Put me back
-  // outputModel.calculated.futureNetWorth = computeFutureNetWorth(outputModel.assets, outputModel.liabilities);
+  outputModel.calculated.futureNetWorth = computeFutureNetWorth(outputModel.assets, outputModel.liabilities);
 
   return outputModel;
 }
