@@ -136,6 +136,36 @@ describe('NetWorth Model - computeOutputModel', () => {
     }).catch((e) => { done(e); });
   });
 
+  it('Handles currency conversion and reverse without loss of precision', (done) => {
+    const inputModel = {
+      assets: {
+        LineItem01: {
+          valueBig: Big(4555000),
+        },
+      },
+      liabilities: {
+        LineItem01: {
+          monthlyPaymentBig: Big(5),
+          valueBig: Big(1),
+        },
+      },
+      currency: 'USD',
+    };
+
+    currencyConversionRateProviderUsdInr = () => Promise.resolve(Big(68.193694));
+    netWorthModel.computeOutputModel(inputModel, 'INR', currencyConversionRateProviderUsdInr).then((outputModel) => {
+      expect(outputModel.currency).to.equal('INR');
+      expect(outputModel.assets.LineItem01.valueBig.eq(310622276.17), 'LineItem01').to.be.true;
+    }).catch((e) => { done(e); });
+
+    currencyConversionRateProviderInrUsd = () => Promise.resolve(Big(0.014664112));
+    netWorthModel.computeOutputModel(inputModel, 'USD', currencyConversionRateProviderInrUsd).then((outputModel) => {
+      expect(outputModel.currency).to.equal('USD');
+      expect(outputModel.assets.LineItem01.valueBig.eq(4555000), 'LineItem01').to.be.true;
+      done();
+    }).catch((e) => { done(e); });
+  });
+
   it('Handles currency conversion, and also with string inputs', (done) => {
     const inputModel = {
       assets: {
