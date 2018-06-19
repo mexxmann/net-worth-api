@@ -145,6 +145,7 @@ describe('NetWorth Model - computeOutputModel', () => {
       },
       liabilities: {
         LineItem01: {
+          monthlyPaymentBig: Big(5),
           valueBig: '1', // string input
         },
       },
@@ -154,6 +155,7 @@ describe('NetWorth Model - computeOutputModel', () => {
     currencyConversionRateProvider = () => Promise.resolve(Big(2));
     netWorthModel.computeOutputModel(inputModel, 'EUR', currencyConversionRateProvider).then((outputModel) => {
       expect(outputModel.currency).to.equal('EUR');
+      expect(outputModel.liabilities.LineItem01.monthlyPaymentBig.eq(10), 'LineItem01 monthlyPayment').to.be.true;
       expect(outputModel.calculated.totalAssetsBig.eq(4), 'total assets:').to.be.true;
       expect(outputModel.calculated.totalLiabilitiesBig.eq(2), 'total liabilies').to.be.true;
       expect(outputModel.calculated.netWorthBig.eq(2), 'net worth').to.be.true;

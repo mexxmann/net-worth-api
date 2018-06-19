@@ -181,6 +181,10 @@ function initializeOutputBalanceSheetItems(inputBalanceSheetData, rateBig) {
     if (localRateBig.eq(1) === false) {
       outputBalanceSheetData[key].valueBig =
         util.convertToBig(outputBalanceSheetData[key].valueBig, Big(0)).times(localRateBig);
+      if (Object.prototype.hasOwnProperty.call(outputBalanceSheetData[key], 'monthlyPaymentBig')) {
+        outputBalanceSheetData[key].monthlyPaymentBig =
+        util.convertToBig(outputBalanceSheetData[key].monthlyPaymentBig, Big(0)).times(localRateBig);
+      }
     }
   });
   return outputBalanceSheetData;
