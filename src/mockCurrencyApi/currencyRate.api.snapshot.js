@@ -10,8 +10,25 @@ function getRateTable() {
       CAD_USD: 0.757440,
       USD_EUR: 0.861585,
       EUR_USD: 1.160652,
+      USD_GBP: 0.753444,
+      GBP_USD: 1.327239,
+      USD_INR: 68.193694,
+      INR_USD: 0.014664,
+
       CAD_EUR: 0.652599,
       EUR_CAD: 1.532334,
+      CAD_GBP: 0.570688,
+      GBP_CAD: 1.752270,
+      CAD_INR: 51.652637,
+      INR_CAD: 0.019360,
+
+      EUR_GBP: 0.874485,
+      GBP_EUR: 1.143530,
+      EUR_INR: 79.149117,
+      INR_EUR: 0.012634,
+
+      GBP_INR: 90.509361,
+      INR_GBP: 0.011049,
   };
   return rateTable;
 }
